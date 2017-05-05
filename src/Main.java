@@ -1,3 +1,6 @@
+import org.chocosolver.solver.Model;
+import org.chocosolver.solver.variables.IntVar;
+
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -24,6 +27,14 @@ public class Main {
         init();
 
         int stat = Obj.SpeedGround;
+        findMax(stat);
+
+        Model m = new Model("Test");
+        IntVar pers = m.intVar("perso", 0, Main.pers.size() - 1, false);
+    }
+
+    public static void findMax(int stat) {
+
 
         double maxMiniPerso = maxStats.apply(stat, pers.parallelStream());
         double maxMiniKart = maxStats.apply(stat, kart.parallelStream());
