@@ -19,7 +19,6 @@ public class Obj {
     ObjType type;
     String nom;
     Double[] stats;
-
     Obj(ObjType type, String nom, double[] stats) {
         this.type = type;
         this.nom = nom;
@@ -32,12 +31,40 @@ public class Obj {
         }
     }
 
+    static String GetChar(int g) {
+        switch (g) {
+            case SpeedGround:
+                return "SpeedGround";
+            case SpeedWater:
+                return "SpeedWater";
+            case SpeedAir:
+                return "SpeedAir";
+            case SpeedNoGravity:
+                return "SpeedNoGravity";
+            case Acceleration:
+                return "Acceleration";
+            case Weight:
+                return "Weight";
+            case HandlingGround:
+                return "HandlingGround";
+            case HandlingWater:
+                return "HandlingWater";
+            case HandlingAir:
+                return "HandlingAir";
+            case HandlingNoGravity:
+                return "HandlingNoGravity";
+            case Traction:
+                return "Traction";
+            case MiniTurbo:
+                return "MiniTurbo";
+            default:
+                return "Pourquoi ?";
+        }
+    }
+
     @Override
     public String toString() {
-        return "Obj{" +
-                "type=" + type +
-                ", nom='" + nom + '\'' +
-                '}';
+        return type + " : " + nom;
     }
 
     @Override

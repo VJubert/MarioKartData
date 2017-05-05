@@ -1,6 +1,6 @@
 public enum ObjType {
-    Perso,
+    Pers,
     Kart,
     Roue,
-    Ailes
+    Aile
 }

@@ -1,4 +1,5 @@
 import org.chocosolver.solver.Model;
+import org.chocosolver.solver.Solver;
 import org.chocosolver.solver.variables.IntVar;
 
 import java.util.Arrays;
@@ -17,6 +18,12 @@ public class Main {
     static List<Obj> roues;
     static List<Obj> ailes;
 
+    static Double[][] persArray;
+    static Double[][] kartArray;
+    static Double[][] rouesArray;
+    static Double[][] ailesArray;
+
+
     static Function<Stream<Obj>, Integer> numberOfGroup = stream -> stream.collect(Collectors.groupingBy(Function.identity())).size();
     static Function<Integer, BiFunction<Double, Stream<Obj>, List<Obj>>> groupByStat = stat -> (max, stream) -> stream.collect(Collectors.groupingBy(o -> o.stats[stat])).get(max);
     static Function<Integer, Comparator<Obj>> comparatorByStats = stats -> (o1, o2) -> o1.stats[stats] > o2.stats[stats] ? 1 : Objects.equals(o1.stats[stats], o2.stats[stats]) ? 0 : -1;
@@ -26,16 +33,31 @@ public class Main {
     public static void main(String[] args) {
         init();
 
-        int stat = Obj.SpeedGround;
-        findMax(stat);
-
         Model m = new Model("Test");
-        IntVar pers = m.intVar("perso", 0, Main.pers.size() - 1, false);
+        IntVar pers = m.intVar("perso", 0, Main.pers.size() - 1);
+        IntVar kart = m.intVar("kart", 0, Main.kart.size() - 1);
+        IntVar roues = m.intVar("roues", 0, Main.roues.size() - 1);
+        IntVar ailes = m.intVar("ailes", 0, Main.ailes.size() - 1);
+
+        Solver solver = m.getSolver();
+        if (solver.solve()) {
+            Obj persRes = Main.pers.get(pers.getValue());
+            Obj kartRes = Main.kart.get(kart.getValue());
+            Obj rouesRes = Main.roues.get(roues.getValue());
+            Obj ailesRes = Main.ailes.get(ailes.getValue());
+            System.out.println(persRes);
+            System.out.println(kartRes);
+            System.out.println(rouesRes);
+            System.out.println(ailesRes);
+            for (int i = 0; i < 12; i++) {
+                double res = persRes.stats[i] + kartRes.stats[i] + rouesRes.stats[i] + ailesRes.stats[i];
+                System.out.println(Obj.GetChar(i) + " : " + res);
+            }
+        }
+
     }
 
     public static void findMax(int stat) {
-
-
         double maxMiniPerso = maxStats.apply(stat, pers.parallelStream());
         double maxMiniKart = maxStats.apply(stat, kart.parallelStream());
         double maxMiniRoues = maxStats.apply(stat, roues.parallelStream());
@@ -50,50 +72,50 @@ public class Main {
 
     public static void init() {
         pers = Arrays.asList(
-                new Obj(ObjType.Perso, "Bébé Peach", new double[]{2.25, 2.5, 2.75, 2, 4, 2, 5, 4.5, 5, 5, 4.25, 4}),
-                new Obj(ObjType.Perso, "Bébé Daisy", new double[]{2.25, 2.5, 2.75, 2, 4, 2, 5, 4.5, 5, 5, 4.25, 4}),
-                new Obj(ObjType.Perso, "Bébé Harmonie", new double[]{2.25, 2.5, 2.75, 2, 4.25, 2, 4.75, 4.25, 4.75, 4.75, 3.75, 4}),
-                new Obj(ObjType.Perso, "Lemmy", new double[]{2.25, 2.5, 2.75, 2, 4.25, 2, 4.75, 4.25, 4.75, 4.75, 3.75, 4}),
-                new Obj(ObjType.Perso, "Bébé Mario", new double[]{2.5, 2.75, 3, 2.25, 4.25, 2.25, 4.5, 4, 4.5, 4.5, 4, 3.75}),
-                new Obj(ObjType.Perso, "Bébé Luigi", new double[]{2.5, 2.75, 3, 2.25, 4.25, 2.25, 4.5, 4, 4.5, 4.5, 4, 3.75}),
-                new Obj(ObjType.Perso, "Skelerex", new double[]{2.5, 2.75, 3, 2.25, 4.25, 2.25, 4.5, 4, 4.5, 4.5, 4, 3.75}),
-                new Obj(ObjType.Perso, "Mii léger", new double[]{2.5, 2.75, 3, 2.25, 4.25, 2.25, 4.5, 4, 4.5, 4.5, 4, 3.75}),
-                new Obj(ObjType.Perso, "Koopa", new double[]{2.75, 3, 3.25, 2.5, 4, 2.5, 4.5, 4, 4.5, 4.5, 4.25, 3.75}),
-                new Obj(ObjType.Perso, "Laikitu", new double[]{2.75, 3, 3.25, 2.5, 4, 2.5, 4.5, 4, 4.5, 4.5, 4.25, 3.75}),
-                new Obj(ObjType.Perso, "Bowser Jr", new double[]{2.75, 3, 3.25, 2.5, 4, 2.5, 4.5, 4, 4.5, 4.5, 4.25, 3.75}),
-                new Obj(ObjType.Perso, "Toadette", new double[]{2.75, 3, 3.25, 2.5, 4.25, 2.5, 4.25, 3.75, 4.25, 4.25, 3.5, 3.75}),
-                new Obj(ObjType.Perso, "Wendy", new double[]{2.75, 3, 3.25, 2.5, 4.25, 2.5, 4.25, 3.75, 4.25, 4.25, 3.5, 3.75}),
-                new Obj(ObjType.Perso, "Isabelle", new double[]{2.75, 3, 3.25, 2.5, 4.25, 2.5, 4.25, 3.75, 4.25, 4.25, 3.5, 3.75}),
-                new Obj(ObjType.Perso, "Toad", new double[]{3, 3.25, 3.5, 2.75, 4, 2.75, 4.25, 3.75, 4.25, 4.25, 4, 3.5}),
-                new Obj(ObjType.Perso, "Maskass", new double[]{3, 3.25, 3.5, 2.75, 4, 2.75, 4.25, 3.75, 4.25, 4.25, 4, 3.5}),
-                new Obj(ObjType.Perso, "Larry", new double[]{3, 3.25, 3.5, 2.75, 4, 2.75, 4.25, 3.75, 4.25, 4.25, 4, 3.5}),
-                new Obj(ObjType.Perso, "Peach Chat", new double[]{3.25, 3.5, 3.75, 3, 4, 2.75, 4, 3.5, 4, 4, 3.75, 3.5}),
-                new Obj(ObjType.Perso, "Inklink Femme", new double[]{3.25, 3.5, 3.75, 3, 4, 2.75, 4, 3.5, 4, 4, 3.75, 3.5}),
-                new Obj(ObjType.Perso, "Villageoise", new double[]{3.25, 3.5, 3.75, 3, 4, 2.75, 4, 3.5, 4, 4, 3.75, 3.5}),
-                new Obj(ObjType.Perso, "Peach", new double[]{3.5, 3.75, 4, 3.25, 3.75, 3, 3.75, 3.25, 3.75, 3.75, 3.75, 3.5}),
-                new Obj(ObjType.Perso, "Daisy", new double[]{3.5, 3.75, 4, 3.25, 3.75, 3, 3.75, 3.25, 3.75, 3.75, 3.75, 3.5}),
-                new Obj(ObjType.Perso, "Yoshi", new double[]{3.5, 3.75, 4, 3.25, 3.75, 3, 3.75, 3.25, 3.75, 3.75, 3.75, 3.5}),
-                new Obj(ObjType.Perso, "Mario Tanuki", new double[]{3.5, 3.75, 4, 3.25, 3.75, 3.25, 3.75, 3.25, 3.75, 3.75, 3.25, 3.5}),
-                new Obj(ObjType.Perso, "Inklink Homme", new double[]{3.5, 3.75, 4, 3.25, 3.75, 3, 3.75, 3.25, 3.75, 3.75, 3.75, 3.5}),
-                new Obj(ObjType.Perso, "Villageois", new double[]{3.5, 3.75, 4, 3.25, 3.75, 3, 3.75, 3.25, 3.75, 3.75, 3.75, 3.5}),
-                new Obj(ObjType.Perso, "Luigi", new double[]{3.75, 4, 4.25, 3.5, 3.5, 3.5, 3.75, 3.25, 3.75, 3.75, 3.25, 3.25}),
-                new Obj(ObjType.Perso, "Iggy", new double[]{3.75, 4, 4.25, 3.5, 3.5, 3.5, 3.75, 3.25, 3.75, 3.75, 3.25, 3.25}),
-                new Obj(ObjType.Perso, "Mario", new double[]{3.75, 4, 4.25, 3.5, 3.5, 3.5, 3.5, 3, 3.5, 3.5, 3.5, 3.25}),
-                new Obj(ObjType.Perso, "Ludwig", new double[]{3.75, 4, 4.25, 3.5, 3.5, 3.5, 3.5, 3, 3.5, 3.5, 3.5, 3.25}),
-                new Obj(ObjType.Perso, "Mii Moyen", new double[]{3.75, 4, 4.25, 3.5, 3.5, 3.5, 3.5, 3, 3.5, 3.5, 3.5, 3.25}),
-                new Obj(ObjType.Perso, "Harmonie", new double[]{4, 4.25, 4.5, 3.75, 3.25, 3.75, 3.25, 2.75, 3.25, 3.25, 3.75, 3.25}),
-                new Obj(ObjType.Perso, "Boo", new double[]{4, 4.25, 4.5, 3.75, 3.25, 3.75, 3.25, 2.75, 3.25, 3.25, 3.75, 3.25}),
-                new Obj(ObjType.Perso, "Link", new double[]{4, 4.25, 4.5, 3.75, 3.25, 3.75, 3.25, 2.75, 3.25, 3.25, 3.75, 3.25}),
-                new Obj(ObjType.Perso, "Waluigi", new double[]{4.5, 4.75, 5, 4.25, 3.25, 4, 3, 2.5, 3, 3, 3, 3}),
-                new Obj(ObjType.Perso, "Donkey Kong", new double[]{4.5, 4.75, 5, 4.25, 3.25, 4, 3, 2.5, 3, 3, 3, 3}),
-                new Obj(ObjType.Perso, "Roy", new double[]{4.5, 4.75, 5, 4.25, 3.25, 4, 3, 2.5, 3, 3, 3, 3}),
-                new Obj(ObjType.Perso, "Wario", new double[]{4.75, 5, 5.25, 4.5, 3, 4.25, 2.75, 2.25, 2.75, 2.75, 3.25, 2.75}),
-                new Obj(ObjType.Perso, "Bowser Squelette", new double[]{4.75, 5, 5.25, 4.5, 3, 4.25, 2.75, 2.25, 2.75, 2.75, 3.25, 2.75}),
-                new Obj(ObjType.Perso, "Silver Mario", new double[]{4.25, 4.5, 4.75, 4, 3.25, 4.5, 3.25, 2.75, 3.25, 3.25, 3.25, 3}),
-                new Obj(ObjType.Perso, "Peach Or Rose", new double[]{4.5, 4.75, 5, 4.25, 3.25, 4, 3, 2.5, 3, 3, 3, 3}),
-                new Obj(ObjType.Perso, "Bowser", new double[]{4.75, 5, 5.25, 4.5, 3, 4.5, 2.5, 2, 2.5, 2.5, 3, 2.75}),
-                new Obj(ObjType.Perso, "Morton", new double[]{4.75, 5, 5.25, 4.5, 3, 4.5, 2.5, 2, 2.5, 2.5, 3, 2.75}),
-                new Obj(ObjType.Perso, "Mii Lourd", new double[]{4.75, 5, 5.25, 4.5, 3, 4.5, 2.5, 2, 2.5, 2.5, 3, 2.75})
+                new Obj(ObjType.Pers, "Bébé Peach", new double[]{2.25, 2.5, 2.75, 2, 4, 2, 5, 4.5, 5, 5, 4.25, 4}),
+                new Obj(ObjType.Pers, "Bébé Daisy", new double[]{2.25, 2.5, 2.75, 2, 4, 2, 5, 4.5, 5, 5, 4.25, 4}),
+                new Obj(ObjType.Pers, "Bébé Harmonie", new double[]{2.25, 2.5, 2.75, 2, 4.25, 2, 4.75, 4.25, 4.75, 4.75, 3.75, 4}),
+                new Obj(ObjType.Pers, "Lemmy", new double[]{2.25, 2.5, 2.75, 2, 4.25, 2, 4.75, 4.25, 4.75, 4.75, 3.75, 4}),
+                new Obj(ObjType.Pers, "Bébé Mario", new double[]{2.5, 2.75, 3, 2.25, 4.25, 2.25, 4.5, 4, 4.5, 4.5, 4, 3.75}),
+                new Obj(ObjType.Pers, "Bébé Luigi", new double[]{2.5, 2.75, 3, 2.25, 4.25, 2.25, 4.5, 4, 4.5, 4.5, 4, 3.75}),
+                new Obj(ObjType.Pers, "Skelerex", new double[]{2.5, 2.75, 3, 2.25, 4.25, 2.25, 4.5, 4, 4.5, 4.5, 4, 3.75}),
+                new Obj(ObjType.Pers, "Mii léger", new double[]{2.5, 2.75, 3, 2.25, 4.25, 2.25, 4.5, 4, 4.5, 4.5, 4, 3.75}),
+                new Obj(ObjType.Pers, "Koopa", new double[]{2.75, 3, 3.25, 2.5, 4, 2.5, 4.5, 4, 4.5, 4.5, 4.25, 3.75}),
+                new Obj(ObjType.Pers, "Laikitu", new double[]{2.75, 3, 3.25, 2.5, 4, 2.5, 4.5, 4, 4.5, 4.5, 4.25, 3.75}),
+                new Obj(ObjType.Pers, "Bowser Jr", new double[]{2.75, 3, 3.25, 2.5, 4, 2.5, 4.5, 4, 4.5, 4.5, 4.25, 3.75}),
+                new Obj(ObjType.Pers, "Toadette", new double[]{2.75, 3, 3.25, 2.5, 4.25, 2.5, 4.25, 3.75, 4.25, 4.25, 3.5, 3.75}),
+                new Obj(ObjType.Pers, "Wendy", new double[]{2.75, 3, 3.25, 2.5, 4.25, 2.5, 4.25, 3.75, 4.25, 4.25, 3.5, 3.75}),
+                new Obj(ObjType.Pers, "Isabelle", new double[]{2.75, 3, 3.25, 2.5, 4.25, 2.5, 4.25, 3.75, 4.25, 4.25, 3.5, 3.75}),
+                new Obj(ObjType.Pers, "Toad", new double[]{3, 3.25, 3.5, 2.75, 4, 2.75, 4.25, 3.75, 4.25, 4.25, 4, 3.5}),
+                new Obj(ObjType.Pers, "Maskass", new double[]{3, 3.25, 3.5, 2.75, 4, 2.75, 4.25, 3.75, 4.25, 4.25, 4, 3.5}),
+                new Obj(ObjType.Pers, "Larry", new double[]{3, 3.25, 3.5, 2.75, 4, 2.75, 4.25, 3.75, 4.25, 4.25, 4, 3.5}),
+                new Obj(ObjType.Pers, "Peach Chat", new double[]{3.25, 3.5, 3.75, 3, 4, 2.75, 4, 3.5, 4, 4, 3.75, 3.5}),
+                new Obj(ObjType.Pers, "Inklink Femme", new double[]{3.25, 3.5, 3.75, 3, 4, 2.75, 4, 3.5, 4, 4, 3.75, 3.5}),
+                new Obj(ObjType.Pers, "Villageoise", new double[]{3.25, 3.5, 3.75, 3, 4, 2.75, 4, 3.5, 4, 4, 3.75, 3.5}),
+                new Obj(ObjType.Pers, "Peach", new double[]{3.5, 3.75, 4, 3.25, 3.75, 3, 3.75, 3.25, 3.75, 3.75, 3.75, 3.5}),
+                new Obj(ObjType.Pers, "Daisy", new double[]{3.5, 3.75, 4, 3.25, 3.75, 3, 3.75, 3.25, 3.75, 3.75, 3.75, 3.5}),
+                new Obj(ObjType.Pers, "Yoshi", new double[]{3.5, 3.75, 4, 3.25, 3.75, 3, 3.75, 3.25, 3.75, 3.75, 3.75, 3.5}),
+                new Obj(ObjType.Pers, "Mario Tanuki", new double[]{3.5, 3.75, 4, 3.25, 3.75, 3.25, 3.75, 3.25, 3.75, 3.75, 3.25, 3.5}),
+                new Obj(ObjType.Pers, "Inklink Homme", new double[]{3.5, 3.75, 4, 3.25, 3.75, 3, 3.75, 3.25, 3.75, 3.75, 3.75, 3.5}),
+                new Obj(ObjType.Pers, "Villageois", new double[]{3.5, 3.75, 4, 3.25, 3.75, 3, 3.75, 3.25, 3.75, 3.75, 3.75, 3.5}),
+                new Obj(ObjType.Pers, "Luigi", new double[]{3.75, 4, 4.25, 3.5, 3.5, 3.5, 3.75, 3.25, 3.75, 3.75, 3.25, 3.25}),
+                new Obj(ObjType.Pers, "Iggy", new double[]{3.75, 4, 4.25, 3.5, 3.5, 3.5, 3.75, 3.25, 3.75, 3.75, 3.25, 3.25}),
+                new Obj(ObjType.Pers, "Mario", new double[]{3.75, 4, 4.25, 3.5, 3.5, 3.5, 3.5, 3, 3.5, 3.5, 3.5, 3.25}),
+                new Obj(ObjType.Pers, "Ludwig", new double[]{3.75, 4, 4.25, 3.5, 3.5, 3.5, 3.5, 3, 3.5, 3.5, 3.5, 3.25}),
+                new Obj(ObjType.Pers, "Mii Moyen", new double[]{3.75, 4, 4.25, 3.5, 3.5, 3.5, 3.5, 3, 3.5, 3.5, 3.5, 3.25}),
+                new Obj(ObjType.Pers, "Harmonie", new double[]{4, 4.25, 4.5, 3.75, 3.25, 3.75, 3.25, 2.75, 3.25, 3.25, 3.75, 3.25}),
+                new Obj(ObjType.Pers, "Boo", new double[]{4, 4.25, 4.5, 3.75, 3.25, 3.75, 3.25, 2.75, 3.25, 3.25, 3.75, 3.25}),
+                new Obj(ObjType.Pers, "Link", new double[]{4, 4.25, 4.5, 3.75, 3.25, 3.75, 3.25, 2.75, 3.25, 3.25, 3.75, 3.25}),
+                new Obj(ObjType.Pers, "Waluigi", new double[]{4.5, 4.75, 5, 4.25, 3.25, 4, 3, 2.5, 3, 3, 3, 3}),
+                new Obj(ObjType.Pers, "Donkey Kong", new double[]{4.5, 4.75, 5, 4.25, 3.25, 4, 3, 2.5, 3, 3, 3, 3}),
+                new Obj(ObjType.Pers, "Roy", new double[]{4.5, 4.75, 5, 4.25, 3.25, 4, 3, 2.5, 3, 3, 3, 3}),
+                new Obj(ObjType.Pers, "Wario", new double[]{4.75, 5, 5.25, 4.5, 3, 4.25, 2.75, 2.25, 2.75, 2.75, 3.25, 2.75}),
+                new Obj(ObjType.Pers, "Bowser Squelette", new double[]{4.75, 5, 5.25, 4.5, 3, 4.25, 2.75, 2.25, 2.75, 2.75, 3.25, 2.75}),
+                new Obj(ObjType.Pers, "Silver Mario", new double[]{4.25, 4.5, 4.75, 4, 3.25, 4.5, 3.25, 2.75, 3.25, 3.25, 3.25, 3}),
+                new Obj(ObjType.Pers, "Peach Or Rose", new double[]{4.5, 4.75, 5, 4.25, 3.25, 4, 3, 2.5, 3, 3, 3, 3}),
+                new Obj(ObjType.Pers, "Bowser", new double[]{4.75, 5, 5.25, 4.5, 3, 4.5, 2.5, 2, 2.5, 2.5, 3, 2.75}),
+                new Obj(ObjType.Pers, "Morton", new double[]{4.75, 5, 5.25, 4.5, 3, 4.5, 2.5, 2, 2.5, 2.5, 3, 2.75}),
+                new Obj(ObjType.Pers, "Mii Lourd", new double[]{4.75, 5, 5.25, 4.5, 3, 4.5, 2.5, 2, 2.5, 2.5, 3, 2.75})
         );
 
         kart = Arrays.asList(
@@ -163,23 +185,38 @@ public class Main {
         );
 
         ailes = Arrays.asList(
-                new Obj(ObjType.Ailes, "Super Glider", new double[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}),
-                new Obj(ObjType.Ailes, "Cloud Glider", new double[]{-0.25, 0, -0.25, 0.25, 0.25, -0.25, 0, 0, 0.25, 0, 0, 0.25}),
-                new Obj(ObjType.Ailes, "Wario Wing", new double[]{0, -0.25, 0, 0.25, 0, 0.25, 0, 0.25, 0, -0.25, -0.25, 0}),
-                new Obj(ObjType.Ailes, "Waddle Wing", new double[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}),
-                new Obj(ObjType.Ailes, "Peach Parasol", new double[]{-0.25, -0.25, -0.25, 0.25, 0.25, 0, 0, 0.25, 0.25, -0.25, -0.25, 0.25}),
-                new Obj(ObjType.Ailes, "Parachute", new double[]{-0.25, 0, -0.25, 0.25, 0.25, -0.25, 0, 0, 0.25, 0, 0, 0.25}),
-                new Obj(ObjType.Ailes, "Parafoil", new double[]{-0.25, -0.25, -0.25, 0.25, 0.25, 0, 0, 0.25, 0.25, -0.25, -0.25, 0.25}),
-                new Obj(ObjType.Ailes, "Flower Glider", new double[]{-0.25, 0, -0.25, 0.25, 0.25, -0.25, 0, 0, 0.25, 0, 0, 0.25}),
-                new Obj(ObjType.Ailes, "Bowser Kite", new double[]{-0.25, -0.25, -0.25, 0.25, 0.25, 0, 0, 0.25, 0.25, -0.25, -0.25, 0.25}),
-                new Obj(ObjType.Ailes, "Plane Glider", new double[]{0, -0.25, 0, 0.25, 0, 0.25, 0, 0.25, 0, -0.25, -0.25, 0}),
-                new Obj(ObjType.Ailes, "MKTV Parafoil", new double[]{-0.25, -0.25, -0.25, 0.25, 0.25, 0, 0, 0.25, 0.25, -0.25, -0.25, 0.25}),
-                new Obj(ObjType.Ailes, "Gold Glider", new double[]{0, -0.25, 0, 0.25, 0, 0.25, 0, 0.25, 0, -0.25, -0.25, 0}),
-                new Obj(ObjType.Ailes, "Hylian Kite", new double[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}),
-                new Obj(ObjType.Ailes, "Paper Glider", new double[]{-0.25, 0, -0.25, 0.25, 0.25, -0.25, 0, 0, 0.25, 0, 0, 0.25})
+                new Obj(ObjType.Aile, "Super Glider", new double[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}),
+                new Obj(ObjType.Aile, "Cloud Glider", new double[]{-0.25, 0, -0.25, 0.25, 0.25, -0.25, 0, 0, 0.25, 0, 0, 0.25}),
+                new Obj(ObjType.Aile, "Wario Wing", new double[]{0, -0.25, 0, 0.25, 0, 0.25, 0, 0.25, 0, -0.25, -0.25, 0}),
+                new Obj(ObjType.Aile, "Waddle Wing", new double[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}),
+                new Obj(ObjType.Aile, "Peach Parasol", new double[]{-0.25, -0.25, -0.25, 0.25, 0.25, 0, 0, 0.25, 0.25, -0.25, -0.25, 0.25}),
+                new Obj(ObjType.Aile, "Parachute", new double[]{-0.25, 0, -0.25, 0.25, 0.25, -0.25, 0, 0, 0.25, 0, 0, 0.25}),
+                new Obj(ObjType.Aile, "Parafoil", new double[]{-0.25, -0.25, -0.25, 0.25, 0.25, 0, 0, 0.25, 0.25, -0.25, -0.25, 0.25}),
+                new Obj(ObjType.Aile, "Flower Glider", new double[]{-0.25, 0, -0.25, 0.25, 0.25, -0.25, 0, 0, 0.25, 0, 0, 0.25}),
+                new Obj(ObjType.Aile, "Bowser Kite", new double[]{-0.25, -0.25, -0.25, 0.25, 0.25, 0, 0, 0.25, 0.25, -0.25, -0.25, 0.25}),
+                new Obj(ObjType.Aile, "Plane Glider", new double[]{0, -0.25, 0, 0.25, 0, 0.25, 0, 0.25, 0, -0.25, -0.25, 0}),
+                new Obj(ObjType.Aile, "MKTV Parafoil", new double[]{-0.25, -0.25, -0.25, 0.25, 0.25, 0, 0, 0.25, 0.25, -0.25, -0.25, 0.25}),
+                new Obj(ObjType.Aile, "Gold Glider", new double[]{0, -0.25, 0, 0.25, 0, 0.25, 0, 0.25, 0, -0.25, -0.25, 0}),
+                new Obj(ObjType.Aile, "Hylian Kite", new double[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}),
+                new Obj(ObjType.Aile, "Paper Glider", new double[]{-0.25, 0, -0.25, 0.25, 0.25, -0.25, 0, 0, 0.25, 0, 0, 0.25})
         );
 
-
+        persArray = new Double[pers.size()][12];
+        for (int i = 0; i < pers.size(); i++) {
+            persArray[i] = pers.get(i).stats;
+        }
+        kartArray = new Double[kart.size()][12];
+        for (int i = 0; i < kart.size(); i++) {
+            kartArray[i] = kart.get(i).stats;
+        }
+        rouesArray = new Double[roues.size()][12];
+        for (int i = 0; i < roues.size(); i++) {
+            rouesArray[i] = roues.get(i).stats;
+        }
+        ailesArray = new Double[ailes.size()][12];
+        for (int i = 0; i < ailes.size(); i++) {
+            ailesArray[i] = ailes.get(i).stats;
+        }
     }
 
 }
