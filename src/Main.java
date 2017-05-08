@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,15 +24,23 @@ public class Main {
     static Double[][] rouesArray;
     static Double[][] ailesArray;
 
+    static Double[] persAverage;
+    static Double[] kartAverage;
+    static Double[] rouesAverage;
+    static Double[] ailesAverage;
+
 
     static Function<Stream<Obj>, Integer> numberOfGroup = stream -> stream.collect(Collectors.groupingBy(Function.identity())).size();
     static Function<Integer, BiFunction<Double, Stream<Obj>, List<Obj>>> groupByStat = stat -> (max, stream) -> stream.collect(Collectors.groupingBy(o -> o.stats[stat])).get(max);
     static Function<Integer, Comparator<Obj>> comparatorByStats = stats -> (o1, o2) -> o1.stats[stats] > o2.stats[stats] ? 1 : Objects.equals(o1.stats[stats], o2.stats[stats]) ? 0 : -1;
     static BiFunction<Integer, Stream<Obj>, Double> maxStats = (stat, stream) -> stream.mapToDouble(x -> x.stats[stat]).max().getAsDouble();
+    static Function<Integer, ToDoubleFunction<Obj>> averageByStat = stat -> o -> o.stats[stat];
+    static Stream<Integer> forAllStats = Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11).parallelStream();
 
 
     public static void main(String[] args) {
         init();
+
 
         Model m = new Model("Test");
         IntVar pers = m.intVar("perso", 0, Main.pers.size() - 1);
@@ -217,6 +226,19 @@ public class Main {
         for (int i = 0; i < ailes.size(); i++) {
             ailesArray[i] = ailes.get(i).stats;
         }
+
+        persAverage = new Double[12];
+        kartAverage = new Double[12];
+        rouesAverage = new Double[12];
+        ailesAverage = new Double[12];
+        BiFunction<Integer, Stream<Obj>, Double> averageByList = (i, s) -> s.mapToDouble(averageByStat.apply(i)).average().getAsDouble();
+
+        forAllStats.forEach(i -> {
+            persAverage[i] = averageByList.apply(i, pers.parallelStream());
+            kartAverage[i] = averageByList.apply(i, kart.parallelStream());
+            rouesAverage[i] = averageByList.apply(i, roues.parallelStream());
+            ailesAverage[i] = averageByList.apply(i, ailes.parallelStream());
+        });
     }
 
 }
