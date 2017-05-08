@@ -10,6 +10,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class Main {
@@ -35,7 +36,7 @@ public class Main {
     static Function<Integer, Comparator<Obj>> comparatorByStats = stats -> (o1, o2) -> o1.stats[stats] > o2.stats[stats] ? 1 : Objects.equals(o1.stats[stats], o2.stats[stats]) ? 0 : -1;
     static BiFunction<Integer, Stream<Obj>, Double> maxStats = (stat, stream) -> stream.mapToDouble(x -> x.stats[stat]).max().getAsDouble();
     static Function<Integer, ToDoubleFunction<Obj>> averageByStat = stat -> o -> o.stats[stat];
-    static Stream<Integer> forAllStats = Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11).parallelStream();
+    static Stream<Integer> forAllStats = IntStream.range(0, 12).boxed().parallel();
 
 
     public static void main(String[] args) {
@@ -48,8 +49,13 @@ public class Main {
         IntVar roues = m.intVar("roues", 0, Main.roues.size() - 1);
         IntVar ailes = m.intVar("ailes", 0, Main.ailes.size() - 1);
 
+//        IntVar res=m.intVar(-6,6);
+//       m.scalar(new IntVar[]{pers,kart,roues,ailes},new int[]{1,1,1,1},"=",res).post();
+
+        //   m.setObjective(Model.MAXIMIZE,res);
+
         Solver solver = m.getSolver();
-        if (solver.solve()) {
+        while (solver.solve()) {
             Obj persRes = Main.pers.get(pers.getValue());
             Obj kartRes = Main.kart.get(kart.getValue());
             Obj rouesRes = Main.roues.get(roues.getValue());
