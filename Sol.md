@@ -1,4 +1,4 @@
-##Solution 1
+## Solution 1
 
 **Pers** : *[Bowser, Morton]*
 
@@ -21,7 +21,7 @@
 - Traction : 2.5
 - MiniTurbo : 3.5
 
-##Solution 2
+## Solution 2
 
 **Pers**: *[Wario, Bowser Squelette]*
 
@@ -44,7 +44,7 @@
 - Traction : 2.5
 - MiniTurbo : 3.5
 
-##Solution 3
+## Solution 3
 
 **Pers** : *[Waluigi, Donkey Kong, Roy]*
 
@@ -67,7 +67,7 @@
 - Traction : 2.5
 - MiniTurbo : 3.5
 
-##Base
+## Base
 
 - SpeedGround : 4.25
 - SpeedWater : 4.75
