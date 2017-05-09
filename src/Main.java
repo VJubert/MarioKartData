@@ -30,55 +30,124 @@ public class Main {
     static Double[] rouesAverage;
     static Double[] ailesAverage;
 
-    static int[] rest;
+
+    static IntVar persCs;
+    static IntVar kartCs;
+    static IntVar rouesCs;
+    static IntVar ailesCs;
 
     static Function<Stream<Obj>, Integer> numberOfGroup = stream -> stream.collect(Collectors.groupingBy(Function.identity())).size();
     static Function<Integer, BiFunction<Double, Stream<Obj>, List<Obj>>> groupByStat = stat -> (max, stream) -> stream.collect(Collectors.groupingBy(o -> o.stats[stat])).get(max);
     static Function<Integer, Comparator<Obj>> comparatorByStats = stats -> (o1, o2) -> o1.stats[stats] > o2.stats[stats] ? 1 : Objects.equals(o1.stats[stats], o2.stats[stats]) ? 0 : -1;
     static BiFunction<Integer, Stream<Obj>, Double> maxStats = (stat, stream) -> stream.mapToDouble(x -> x.stats[stat]).max().getAsDouble();
     static Function<Integer, ToDoubleFunction<Obj>> averageByStat = stat -> o -> o.stats[stat];
-    static Stream<Integer> forAllStats = IntStream.range(0, 12).boxed().parallel();
 
 
     public static void main(String[] args) {
         init();
+        showBaseChoice();
 
+        Model m = new Model("MKData");
+        persCs = m.intVar("perso", 37, 38);
+        kartCs = m.intVar("kart", 0, Main.kart.size() - 1);
+        rouesCs = m.intVar("roues", 0, Main.roues.size() - 1);
+        ailesCs = m.intVar("ailes", 0, Main.ailes.size() - 1);
 
-        Model m = new Model("Test");
-        IntVar pers = m.intVar("perso", 0, Main.pers.size() - 1);
-        IntVar kart = m.intVar("kart", 0, Main.kart.size() - 1);
-        IntVar roues = m.intVar("roues", 0, Main.roues.size() - 1);
-        IntVar ailes = m.intVar("ailes", 0, Main.ailes.size() - 1);
+        addConstraint(m, Obj.Weight, ">=", (int) (4 * 4));
+        IntVar res = addConstraint(m, Obj.SpeedGround, ">=", (int) (4.25 * 4));
+//        addConstraint(m,Obj.SpeedAir,">=", (int) (5*4));
+        addConstraint(m, Obj.SpeedNoGravity, ">=", (int) (4 * 4));
+        addConstraint(m, Obj.MiniTurbo, ">=", (int) (3.5 * 4));
+        addConstraint(m, Obj.Acceleration, ">=", (int) (3.5 * 4));
 
+        m.setObjective(Model.MAXIMIZE, res);
+
+//        System.out.println(m.getSolver().findAllSolutions().size());
+//        m.getSolver().findAllSolutions().stream().map(x->pers.get(x.getIntVal(persCs))).distinct().forEach(System.out::println);
+        printSolutions(m, false);
+    }
+
+    static void printSolutions(Model m) {
+        printSolutions(m, false);
+    }
+
+    static List<Obj> findSame(ObjType type, Obj o) {
+        switch (type) {
+            case Aile:
+                return ailes.stream().filter(x -> x.equals(o)).collect(Collectors.toList());
+            case Kart:
+                return kart.stream().filter(x -> x.equals(o)).collect(Collectors.toList());
+            case Pers:
+                return pers.stream().filter(x -> x.equals(o)).collect(Collectors.toList());
+            case Roue:
+                return roues.stream().filter(x -> x.equals(o)).collect(Collectors.toList());
+            default:
+                return null;
+        }
+    }
+
+    static void printSolutions(Model m, boolean all) {
+        Solver solver = m.getSolver();
+        if (all) {
+            solver.findAllSolutions().stream()./*filter(x -> Main.pers.get(x.getIntVal(persCs)).nom.equals("Waluigi")).*/forEach(solution -> {
+                Obj persRes = Main.pers.get(solution.getIntVal(persCs));
+                Obj kartRes = Main.kart.get(solution.getIntVal(kartCs));
+                Obj rouesRes = Main.roues.get(solution.getIntVal(rouesCs));
+                Obj ailesRes = Main.ailes.get(solution.getIntVal(ailesCs));
+                System.out.println(persRes);
+                System.out.println(kartRes);
+                System.out.println(rouesRes);
+                System.out.println(ailesRes);
+                for (int i = 0; i < 12; i++) {
+                    System.out.println(Obj.GetChar(i) + " : " + (persRes.stats[i] + kartRes.stats[i] + rouesRes.stats[i] + ailesRes.stats[i]));
+                }
+                System.out.println();
+            });
+        } else {
+            while (solver.solve()) {
+                Obj persRes = Main.pers.get(persCs.getValue());
+                Obj kartRes = Main.kart.get(kartCs.getValue());
+                Obj rouesRes = Main.roues.get(rouesCs.getValue());
+                Obj ailesRes = Main.ailes.get(ailesCs.getValue());
+                System.out.println("Pers : " + findSame(ObjType.Pers, persRes));
+                System.out.println("Kart : " + findSame(ObjType.Kart, kartRes));
+                System.out.println("Roues : " + findSame(ObjType.Roue, rouesRes));
+                System.out.println("Ailes : " + findSame(ObjType.Aile, ailesRes));
+                for (int i = 0; i < 12; i++) {
+                    System.out.println(Obj.GetChar(i) + " : " + (persRes.stats[i] + kartRes.stats[i] + rouesRes.stats[i] + ailesRes.stats[i]));
+                }
+                System.out.println();
+            }
+        }
+    }
+
+    private static void showBaseChoice() {
+        Obj p = pers.parallelStream().filter(x -> x.nom.equals("Morton")).findFirst().get();
+        Obj k = kart.parallelStream().filter(x -> x.nom.equals("Gold Standard")).findFirst().get();
+        Obj r = roues.parallelStream().filter(x -> x.nom.equals("Roller")).findFirst().get();
+        Obj a = ailes.parallelStream().filter(x -> x.nom.equals("Flower Glider")).findFirst().get();
+
+        IntStream.range(0, 12).forEachOrdered(x -> System.out.println(Obj.GetChar(x) + " : " + (p.stats[x] + k.stats[x] + r.stats[x] + a.stats[x])));
+        System.out.println("Fin Base");
+        System.out.println();
+    }
+
+    static IntVar addConstraint(Model m, int stat, String op, Integer result) {
         IntVar resPers = m.intVar(-24, 24);
         IntVar resKart = m.intVar(-24, 24);
         IntVar resRoues = m.intVar(-24, 24);
         IntVar resAiles = m.intVar(-24, 24);
-        m.element(resPers, persArray[1], pers).post();
-        m.element(resKart, kartArray[1], kart).post();
-        m.element(resRoues, rouesArray[1], roues).post();
-        m.element(resAiles, ailesArray[1], ailes).post();
-
-
-        IntVar res = m.intVar(-24, 24);
-        m.scalar(new IntVar[]{resPers, resKart, resRoues, resAiles}, new int[]{1, 1, 1, 1}, "=", res).post();
-
-        m.setObjective(Model.MAXIMIZE, res);
-
-        Solver solver = m.getSolver();
-        while (solver.solve()) {
-            Obj persRes = Main.pers.get(pers.getValue());
-            Obj kartRes = Main.kart.get(kart.getValue());
-            Obj rouesRes = Main.roues.get(roues.getValue());
-            Obj ailesRes = Main.ailes.get(ailes.getValue());
-            System.out.println(persRes);
-            System.out.println(kartRes);
-            System.out.println(rouesRes);
-            System.out.println(ailesRes);
-            for (int i = 0; i < 12; i++) {
-                System.out.println(Obj.GetChar(i) + " : " + (persRes.stats[i] + kartRes.stats[i] + rouesRes.stats[i] + ailesRes.stats[i]));
-            }
-        }
+        m.element(resPers, persArray[stat], persCs).post();
+        m.element(resKart, kartArray[stat], kartCs).post();
+        m.element(resRoues, rouesArray[stat], rouesCs).post();
+        m.element(resAiles, ailesArray[stat], ailesCs).post();
+        IntVar res;
+        if (result == null)
+            res = m.intVar(-24, 24);
+        else
+            res = m.intVar(result);
+        m.scalar(new IntVar[]{resPers, resKart, resRoues, resAiles}, new int[]{1, 1, 1, 1}, op, res).post();
+        return res;
 
     }
 
@@ -137,10 +206,10 @@ public class Main {
                 new Obj(ObjType.Pers, "Wario", new double[]{4.75, 5, 5.25, 4.5, 3, 4.25, 2.75, 2.25, 2.75, 2.75, 3.25, 2.75}),
                 new Obj(ObjType.Pers, "Bowser Squelette", new double[]{4.75, 5, 5.25, 4.5, 3, 4.25, 2.75, 2.25, 2.75, 2.75, 3.25, 2.75}),
                 new Obj(ObjType.Pers, "Silver Mario", new double[]{4.25, 4.5, 4.75, 4, 3.25, 4.5, 3.25, 2.75, 3.25, 3.25, 3.25, 3}),
-                new Obj(ObjType.Pers, "Peach Or Rose", new double[]{4.5, 4.75, 5, 4.25, 3.25, 4, 3, 2.5, 3, 3, 3, 3}),
+                new Obj(ObjType.Pers, "Peach Or Rose", new double[]{4.25, 4.5, 4.75, 4, 3.25, 4.5, 3.25, 2.75, 3.25, 3.25, 3.25, 3}),
                 new Obj(ObjType.Pers, "Bowser", new double[]{4.75, 5, 5.25, 4.5, 3, 4.5, 2.5, 2, 2.5, 2.5, 3, 2.75}),
-                new Obj(ObjType.Pers, "Morton", new double[]{4.75, 5, 5.25, 4.5, 3, 4.5, 2.5, 2, 2.5, 2.5, 3, 2.75}),
-                new Obj(ObjType.Pers, "Mii Lourd", new double[]{4.75, 5, 5.25, 4.5, 3, 4.5, 2.5, 2, 2.5, 2.5, 3, 2.75})
+                new Obj(ObjType.Pers, "Morton", new double[]{4.75, 5, 5.25, 4.5, 3, 4.5, 2.5, 2, 2.5, 2.5, 3, 2.75})
+                //new Obj(ObjType.Pers, "Mii Lourd", new double[]{4.75, 5, 5.25, 4.5, 3, 4.5, 2.5, 2, 2.5, 2.5, 3, 2.75})
         );
 
         kart = Arrays.asList(
@@ -237,7 +306,7 @@ public class Main {
         ailesAverage = new Double[12];
         BiFunction<Integer, Stream<Obj>, Double> averageByList = (i, s) -> s.mapToDouble(averageByStat.apply(i)).average().getAsDouble();
 
-        forAllStats.forEach(i -> {
+        IntStream.range(0, 12).forEachOrdered(i -> {
             for (int j = 0; j < pers.size(); j++) {
                 persArray[i][j] = (int) (pers.get(j).stats[i] * 4);
             }

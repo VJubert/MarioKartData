@@ -64,7 +64,7 @@ public class Obj {
 
     @Override
     public String toString() {
-        return type + " : " + nom;
+        return nom;
     }
 
     @Override
