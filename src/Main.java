@@ -20,16 +20,17 @@ public class Main {
     static List<Obj> roues;
     static List<Obj> ailes;
 
-    static Double[][] persArray;
-    static Double[][] kartArray;
-    static Double[][] rouesArray;
-    static Double[][] ailesArray;
+    static int[][] persArray;
+    static int[][] kartArray;
+    static int[][] rouesArray;
+    static int[][] ailesArray;
 
     static Double[] persAverage;
     static Double[] kartAverage;
     static Double[] rouesAverage;
     static Double[] ailesAverage;
 
+    static int[] rest;
 
     static Function<Stream<Obj>, Integer> numberOfGroup = stream -> stream.collect(Collectors.groupingBy(Function.identity())).size();
     static Function<Integer, BiFunction<Double, Stream<Obj>, List<Obj>>> groupByStat = stat -> (max, stream) -> stream.collect(Collectors.groupingBy(o -> o.stats[stat])).get(max);
@@ -49,10 +50,20 @@ public class Main {
         IntVar roues = m.intVar("roues", 0, Main.roues.size() - 1);
         IntVar ailes = m.intVar("ailes", 0, Main.ailes.size() - 1);
 
-//        IntVar res=m.intVar(-6,6);
-//       m.scalar(new IntVar[]{pers,kart,roues,ailes},new int[]{1,1,1,1},"=",res).post();
+        IntVar resPers = m.intVar(-24, 24);
+        IntVar resKart = m.intVar(-24, 24);
+        IntVar resRoues = m.intVar(-24, 24);
+        IntVar resAiles = m.intVar(-24, 24);
+        m.element(resPers, persArray[1], pers).post();
+        m.element(resKart, kartArray[1], kart).post();
+        m.element(resRoues, rouesArray[1], roues).post();
+        m.element(resAiles, ailesArray[1], ailes).post();
 
-        //   m.setObjective(Model.MAXIMIZE,res);
+
+        IntVar res = m.intVar(-24, 24);
+        m.scalar(new IntVar[]{resPers, resKart, resRoues, resAiles}, new int[]{1, 1, 1, 1}, "=", res).post();
+
+        m.setObjective(Model.MAXIMIZE, res);
 
         Solver solver = m.getSolver();
         while (solver.solve()) {
@@ -65,8 +76,7 @@ public class Main {
             System.out.println(rouesRes);
             System.out.println(ailesRes);
             for (int i = 0; i < 12; i++) {
-                double res = persRes.stats[i] + kartRes.stats[i] + rouesRes.stats[i] + ailesRes.stats[i];
-                System.out.println(Obj.GetChar(i) + " : " + res);
+                System.out.println(Obj.GetChar(i) + " : " + (persRes.stats[i] + kartRes.stats[i] + rouesRes.stats[i] + ailesRes.stats[i]));
             }
         }
 
@@ -216,22 +226,10 @@ public class Main {
                 new Obj(ObjType.Aile, "Paper Glider", new double[]{-0.25, 0, -0.25, 0.25, 0.25, -0.25, 0, 0, 0.25, 0, 0, 0.25})
         );
 
-        persArray = new Double[pers.size()][12];
-        for (int i = 0; i < pers.size(); i++) {
-            persArray[i] = pers.get(i).stats;
-        }
-        kartArray = new Double[kart.size()][12];
-        for (int i = 0; i < kart.size(); i++) {
-            kartArray[i] = kart.get(i).stats;
-        }
-        rouesArray = new Double[roues.size()][12];
-        for (int i = 0; i < roues.size(); i++) {
-            rouesArray[i] = roues.get(i).stats;
-        }
-        ailesArray = new Double[ailes.size()][12];
-        for (int i = 0; i < ailes.size(); i++) {
-            ailesArray[i] = ailes.get(i).stats;
-        }
+        persArray = new int[12][pers.size()];
+        kartArray = new int[12][kart.size()];
+        rouesArray = new int[12][roues.size()];
+        ailesArray = new int[12][ailes.size()];
 
         persAverage = new Double[12];
         kartAverage = new Double[12];
@@ -240,6 +238,18 @@ public class Main {
         BiFunction<Integer, Stream<Obj>, Double> averageByList = (i, s) -> s.mapToDouble(averageByStat.apply(i)).average().getAsDouble();
 
         forAllStats.forEach(i -> {
+            for (int j = 0; j < pers.size(); j++) {
+                persArray[i][j] = (int) (pers.get(j).stats[i] * 4);
+            }
+            for (int j = 0; j < kart.size(); j++) {
+                kartArray[i][j] = (int) (kart.get(j).stats[i] * 4);
+            }
+            for (int j = 0; j < roues.size(); j++) {
+                rouesArray[i][j] = (int) (roues.get(j).stats[i] * 4);
+            }
+            for (int j = 0; j < ailes.size(); j++) {
+                ailesArray[i][j] = (int) (ailes.get(j).stats[i] * 4);
+            }
             persAverage[i] = averageByList.apply(i, pers.parallelStream());
             kartAverage[i] = averageByList.apply(i, kart.parallelStream());
             rouesAverage[i] = averageByList.apply(i, roues.parallelStream());
