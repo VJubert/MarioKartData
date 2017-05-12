@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 
 public class Main {
 
+    static List<Obj> objs;
     static List<Obj> pers;
     static List<Obj> kart;
     static List<Obj> roues;
@@ -48,23 +49,22 @@ public class Main {
         showBaseChoice();
 
         Model m = new Model("MKData");
-        persCs = m.intVar("perso", 37, 38);
+        persCs = m.intVar("perso", 0, Main.pers.size() - 1);
         kartCs = m.intVar("kart", 0, Main.kart.size() - 1);
         rouesCs = m.intVar("roues", 0, Main.roues.size() - 1);
         ailesCs = m.intVar("ailes", 0, Main.ailes.size() - 1);
 
-        addConstraint(m, Obj.Weight, ">=", (int) (4 * 4));
-        IntVar res = addConstraint(m, Obj.SpeedGround, ">=", (int) (4.25 * 4));
+//        addConstraint(m, Obj.Weight, ">=", (int) (3.5 * 4));
+        IntVar res = addConstraint(m, Obj.SpeedGround, ">=", (int) (5.75 * 4));
 //        addConstraint(m,Obj.SpeedAir,">=", (int) (5*4));
-        addConstraint(m, Obj.SpeedNoGravity, ">=", (int) (4 * 4));
-        addConstraint(m, Obj.MiniTurbo, ">=", (int) (3.5 * 4));
-        addConstraint(m, Obj.Acceleration, ">=", (int) (3.5 * 4));
-
+//        addConstraint(m, Obj.SpeedNoGravity, ">=", (int) (4 * 4));
+//        addConstraint(m, Obj.MiniTurbo, ">=", (int) (3 * 4));
+//        addConstraint(m, Obj.Acceleration, ">=", (int) (3 * 4));
+//
         m.setObjective(Model.MAXIMIZE, res);
 
 //        System.out.println(m.getSolver().findAllSolutions().size());
-//        m.getSolver().findAllSolutions().stream().map(x->pers.get(x.getIntVal(persCs))).distinct().forEach(System.out::println);
-        printSolutions(m, false);
+        printSolutions(m, true);
     }
 
     static void printSolutions(Model m) {
@@ -72,60 +72,42 @@ public class Main {
     }
 
     static List<Obj> findSame(ObjType type, Obj o) {
-        switch (type) {
-            case Aile:
-                return ailes.stream().filter(x -> x.equals(o)).collect(Collectors.toList());
-            case Kart:
-                return kart.stream().filter(x -> x.equals(o)).collect(Collectors.toList());
-            case Pers:
-                return pers.stream().filter(x -> x.equals(o)).collect(Collectors.toList());
-            case Roue:
-                return roues.stream().filter(x -> x.equals(o)).collect(Collectors.toList());
-            default:
-                return null;
-        }
+        return objs.stream().filter(x -> x.type.equals(type)).filter(x -> x.equals(o)).collect(Collectors.toList());
     }
 
     static void printSolutions(Model m, boolean all) {
         Solver solver = m.getSolver();
         if (all) {
-            solver.findAllSolutions().stream()./*filter(x -> Main.pers.get(x.getIntVal(persCs)).nom.equals("Waluigi")).*/forEach(solution -> {
-                Obj persRes = Main.pers.get(solution.getIntVal(persCs));
-                Obj kartRes = Main.kart.get(solution.getIntVal(kartCs));
-                Obj rouesRes = Main.roues.get(solution.getIntVal(rouesCs));
-                Obj ailesRes = Main.ailes.get(solution.getIntVal(ailesCs));
-                System.out.println(persRes);
-                System.out.println(kartRes);
-                System.out.println(rouesRes);
-                System.out.println(ailesRes);
-                for (int i = 0; i < 12; i++) {
-                    System.out.println(Obj.GetChar(i) + " : " + (persRes.stats[i] + kartRes.stats[i] + rouesRes.stats[i] + ailesRes.stats[i]));
-                }
-                System.out.println();
+            solver.findAllSolutions().stream().forEach(solution -> {
+                printCombi(solution.getIntVal(persCs), solution.getIntVal(kartCs), solution.getIntVal(rouesCs), solution.getIntVal(ailesCs));
             });
         } else {
             while (solver.solve()) {
-                Obj persRes = Main.pers.get(persCs.getValue());
-                Obj kartRes = Main.kart.get(kartCs.getValue());
-                Obj rouesRes = Main.roues.get(rouesCs.getValue());
-                Obj ailesRes = Main.ailes.get(ailesCs.getValue());
-                System.out.println("Pers : " + findSame(ObjType.Pers, persRes));
-                System.out.println("Kart : " + findSame(ObjType.Kart, kartRes));
-                System.out.println("Roues : " + findSame(ObjType.Roue, rouesRes));
-                System.out.println("Ailes : " + findSame(ObjType.Aile, ailesRes));
-                for (int i = 0; i < 12; i++) {
-                    System.out.println(Obj.GetChar(i) + " : " + (persRes.stats[i] + kartRes.stats[i] + rouesRes.stats[i] + ailesRes.stats[i]));
-                }
-                System.out.println();
+                printCombi(persCs.getValue(), kartCs.getValue(), rouesCs.getValue(), ailesCs.getValue());
             }
         }
     }
 
+    private static void printCombi(int pers, int kart, int roue, int aile) {
+        Obj persRes = Main.pers.get(pers);
+        Obj kartRes = Main.kart.get(kart);
+        Obj rouesRes = Main.roues.get(roue);
+        Obj ailesRes = Main.ailes.get(aile);
+        System.out.println("Pers : " + findSame(ObjType.Pers, persRes));
+        System.out.println("Kart : " + findSame(ObjType.Kart, kartRes));
+        System.out.println("Roues : " + findSame(ObjType.Roue, rouesRes));
+        System.out.println("Ailes : " + findSame(ObjType.Aile, ailesRes));
+        for (int i = 0; i < 12; i++) {
+            System.out.println(Obj.GetChar(i) + " : " + (persRes.stats[i] + kartRes.stats[i] + rouesRes.stats[i] + ailesRes.stats[i]));
+        }
+        System.out.println();
+    }
+
     private static void showBaseChoice() {
-        Obj p = pers.parallelStream().filter(x -> x.nom.equals("Morton")).findFirst().get();
-        Obj k = kart.parallelStream().filter(x -> x.nom.equals("Gold Standard")).findFirst().get();
-        Obj r = roues.parallelStream().filter(x -> x.nom.equals("Roller")).findFirst().get();
-        Obj a = ailes.parallelStream().filter(x -> x.nom.equals("Flower Glider")).findFirst().get();
+        Obj p = objs.parallelStream().filter(x -> x.nom.equals("Morton")).findFirst().get();
+        Obj k = objs.parallelStream().filter(x -> x.nom.equals("Gold Standard")).findFirst().get();
+        Obj r = objs.parallelStream().filter(x -> x.nom.equals("Roller")).findFirst().get();
+        Obj a = objs.parallelStream().filter(x -> x.nom.equals("Flower Glider")).findFirst().get();
 
         IntStream.range(0, 12).forEachOrdered(x -> System.out.println(Obj.GetChar(x) + " : " + (p.stats[x] + k.stats[x] + r.stats[x] + a.stats[x])));
         System.out.println("Fin Base");
@@ -165,7 +147,7 @@ public class Main {
     }
 
     public static void init() {
-        pers = Arrays.asList(
+        objs = Arrays.asList(
                 new Obj(ObjType.Pers, "Bébé Peach", new double[]{2.25, 2.5, 2.75, 2, 4, 2, 5, 4.5, 5, 5, 4.25, 4}),
                 new Obj(ObjType.Pers, "Bébé Daisy", new double[]{2.25, 2.5, 2.75, 2, 4, 2, 5, 4.5, 5, 5, 4.25, 4}),
                 new Obj(ObjType.Pers, "Bébé Harmonie", new double[]{2.25, 2.5, 2.75, 2, 4.25, 2, 4.75, 4.25, 4.75, 4.75, 3.75, 4}),
@@ -173,7 +155,7 @@ public class Main {
                 new Obj(ObjType.Pers, "Bébé Mario", new double[]{2.5, 2.75, 3, 2.25, 4.25, 2.25, 4.5, 4, 4.5, 4.5, 4, 3.75}),
                 new Obj(ObjType.Pers, "Bébé Luigi", new double[]{2.5, 2.75, 3, 2.25, 4.25, 2.25, 4.5, 4, 4.5, 4.5, 4, 3.75}),
                 new Obj(ObjType.Pers, "Skelerex", new double[]{2.5, 2.75, 3, 2.25, 4.25, 2.25, 4.5, 4, 4.5, 4.5, 4, 3.75}),
-                new Obj(ObjType.Pers, "Mii léger", new double[]{2.5, 2.75, 3, 2.25, 4.25, 2.25, 4.5, 4, 4.5, 4.5, 4, 3.75}),
+//                new Obj(ObjType.Pers, "Mii léger", new double[]{2.5, 2.75, 3, 2.25, 4.25, 2.25, 4.5, 4, 4.5, 4.5, 4, 3.75}),
                 new Obj(ObjType.Pers, "Koopa", new double[]{2.75, 3, 3.25, 2.5, 4, 2.5, 4.5, 4, 4.5, 4.5, 4.25, 3.75}),
                 new Obj(ObjType.Pers, "Laikitu", new double[]{2.75, 3, 3.25, 2.5, 4, 2.5, 4.5, 4, 4.5, 4.5, 4.25, 3.75}),
                 new Obj(ObjType.Pers, "Bowser Jr", new double[]{2.75, 3, 3.25, 2.5, 4, 2.5, 4.5, 4, 4.5, 4.5, 4.25, 3.75}),
@@ -196,7 +178,7 @@ public class Main {
                 new Obj(ObjType.Pers, "Iggy", new double[]{3.75, 4, 4.25, 3.5, 3.5, 3.5, 3.75, 3.25, 3.75, 3.75, 3.25, 3.25}),
                 new Obj(ObjType.Pers, "Mario", new double[]{3.75, 4, 4.25, 3.5, 3.5, 3.5, 3.5, 3, 3.5, 3.5, 3.5, 3.25}),
                 new Obj(ObjType.Pers, "Ludwig", new double[]{3.75, 4, 4.25, 3.5, 3.5, 3.5, 3.5, 3, 3.5, 3.5, 3.5, 3.25}),
-                new Obj(ObjType.Pers, "Mii Moyen", new double[]{3.75, 4, 4.25, 3.5, 3.5, 3.5, 3.5, 3, 3.5, 3.5, 3.5, 3.25}),
+//                new Obj(ObjType.Pers, "Mii Moyen", new double[]{3.75, 4, 4.25, 3.5, 3.5, 3.5, 3.5, 3, 3.5, 3.5, 3.5, 3.25}),
                 new Obj(ObjType.Pers, "Harmonie", new double[]{4, 4.25, 4.5, 3.75, 3.25, 3.75, 3.25, 2.75, 3.25, 3.25, 3.75, 3.25}),
                 new Obj(ObjType.Pers, "Boo", new double[]{4, 4.25, 4.5, 3.75, 3.25, 3.75, 3.25, 2.75, 3.25, 3.25, 3.75, 3.25}),
                 new Obj(ObjType.Pers, "Link", new double[]{4, 4.25, 4.5, 3.75, 3.25, 3.75, 3.25, 2.75, 3.25, 3.25, 3.75, 3.25}),
@@ -208,11 +190,8 @@ public class Main {
                 new Obj(ObjType.Pers, "Silver Mario", new double[]{4.25, 4.5, 4.75, 4, 3.25, 4.5, 3.25, 2.75, 3.25, 3.25, 3.25, 3}),
                 new Obj(ObjType.Pers, "Peach Or Rose", new double[]{4.25, 4.5, 4.75, 4, 3.25, 4.5, 3.25, 2.75, 3.25, 3.25, 3.25, 3}),
                 new Obj(ObjType.Pers, "Bowser", new double[]{4.75, 5, 5.25, 4.5, 3, 4.5, 2.5, 2, 2.5, 2.5, 3, 2.75}),
-                new Obj(ObjType.Pers, "Morton", new double[]{4.75, 5, 5.25, 4.5, 3, 4.5, 2.5, 2, 2.5, 2.5, 3, 2.75})
+                new Obj(ObjType.Pers, "Morton", new double[]{4.75, 5, 5.25, 4.5, 3, 4.5, 2.5, 2, 2.5, 2.5, 3, 2.75}),
                 //new Obj(ObjType.Pers, "Mii Lourd", new double[]{4.75, 5, 5.25, 4.5, 3, 4.5, 2.5, 2, 2.5, 2.5, 3, 2.75})
-        );
-
-        kart = Arrays.asList(
                 new Obj(ObjType.Kart, "Standard Kart", new double[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}),
                 new Obj(ObjType.Kart, "Pipe Frame", new double[]{-0.5, 0, -0.5, -0.5, 0.5, -0.25, 0.5, 0.5, -0.25, 0.25, 0.25, 0.5}),
                 new Obj(ObjType.Kart, "Mach 8", new double[]{0, 0, 0.25, 0.5, -0.25, 0.25, -0.25, 0, -0.25, 0.25, 0.25, 0}),
@@ -251,10 +230,7 @@ public class Main {
                 new Obj(ObjType.Kart, "Teddy Buggy", new double[]{-0.25, -0.25, 0.25, 0, 0.25, 0, 0.25, 0, 0.25, 0, 0, 0.25}),
                 new Obj(ObjType.Kart, "Bone Rattler", new double[]{0.25, 0.5, -0.75, -0.25, -0.75, 0.5, -0.5, 0.75, -0.5, -0.5, 0, -0.}),
                 new Obj(ObjType.Kart, "Inkstriker", new double[]{0, 0, 0.5, 0.5, -0.25, 0.25, -0.25, 0, -0.25, 0.25, 0.25, 0}),
-                new Obj(ObjType.Kart, "Splat Buggy", new double[]{0.25, -0.25, 0, 0.25, -0.25, -0.5, -0.25, 0.25, -0.5, 0.5, 0, -0.25})
-        );
-
-        roues = Arrays.asList(
+                new Obj(ObjType.Kart, "Splat Buggy", new double[]{0.25, -0.25, 0, 0.25, -0.25, -0.5, -0.25, 0.25, -0.5, 0.5, 0, -0.25}),
                 new Obj(ObjType.Roue, "Standard", new double[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}),
                 new Obj(ObjType.Roue, "Monster", new double[]{0, -0.25, -0.5, 0, -0.5, 0.5, -0.75, -0.5, -0.5, -0.75, 0.5, -0.25}),
                 new Obj(ObjType.Roue, "Roller", new double[]{-0.5, 0, 0, -0.5, 0.5, -0.5, 0.25, 0.25, 0.25, 0.25, -0.25, 0.75}),
@@ -275,10 +251,7 @@ public class Main {
                 new Obj(ObjType.Roue, "Gold Tires", new double[]{0.5, 0, -0.25, -0.25, -1, 0.5, -0.25, -0.25, -0.75, -0.5, -0.75, -0.75}),
                 new Obj(ObjType.Roue, "GLA Tires", new double[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}),
                 new Obj(ObjType.Roue, "Triforce Tires", new double[]{0.25, 0.25, -0.5, 0, -0.25, 0.25, -0.5, -0.5, -0.25, -0.25, 0.25, -0.5}),
-                new Obj(ObjType.Roue, "Leaf Tires", new double[]{-0.25, -0.25, -0.25, 0, 0.25, -0.5, 0, 0, -0.25, 0.25, -0.5, 0.5})
-        );
-
-        ailes = Arrays.asList(
+                new Obj(ObjType.Roue, "Leaf Tires", new double[]{-0.25, -0.25, -0.25, 0, 0.25, -0.5, 0, 0, -0.25, 0.25, -0.5, 0.5}),
                 new Obj(ObjType.Aile, "Super Glider", new double[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}),
                 new Obj(ObjType.Aile, "Cloud Glider", new double[]{-0.25, 0, -0.25, 0.25, 0.25, -0.25, 0, 0, 0.25, 0, 0, 0.25}),
                 new Obj(ObjType.Aile, "Wario Wing", new double[]{0, -0.25, 0, 0.25, 0, 0.25, 0, 0.25, 0, -0.25, -0.25, 0}),
@@ -294,6 +267,12 @@ public class Main {
                 new Obj(ObjType.Aile, "Hylian Kite", new double[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}),
                 new Obj(ObjType.Aile, "Paper Glider", new double[]{-0.25, 0, -0.25, 0.25, 0.25, -0.25, 0, 0, 0.25, 0, 0, 0.25})
         );
+
+        pers = objs.stream().filter(obj -> obj.type.equals(ObjType.Pers)).distinct().collect(Collectors.toList());
+        kart = objs.stream().filter(obj -> obj.type.equals(ObjType.Kart)).distinct().collect(Collectors.toList());
+        roues = objs.stream().filter(obj -> obj.type.equals(ObjType.Roue)).distinct().collect(Collectors.toList());
+        ailes = objs.stream().filter(obj -> obj.type.equals(ObjType.Aile)).distinct().collect(Collectors.toList());
+
 
         persArray = new int[12][pers.size()];
         kartArray = new int[12][kart.size()];

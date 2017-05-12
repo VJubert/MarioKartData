@@ -81,5 +81,3 @@
 - HandlingNoGravity : 2.75
 - Traction : 2.0
 - MiniTurbo : 3.5
-
-4,25	4,5	4,25	4,25	3,25	4,5	3	2,5	3	3,25	4	2,75
