@@ -2,10 +2,7 @@ import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solver;
 import org.chocosolver.solver.variables.IntVar;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
@@ -15,64 +12,92 @@ import java.util.stream.Stream;
 
 public class Main {
 
+    public static final String newLine = System.getProperty("line.separator");
     static List<Obj> objs;
     static List<Obj> pers;
     static List<Obj> kart;
     static List<Obj> roues;
     static List<Obj> ailes;
-
     static int[][] persArray;
     static int[][] kartArray;
     static int[][] rouesArray;
     static int[][] ailesArray;
-
     static Double[] persAverage;
     static Double[] kartAverage;
     static Double[] rouesAverage;
     static Double[] ailesAverage;
-
-
     static IntVar persCs;
     static IntVar kartCs;
     static IntVar rouesCs;
     static IntVar ailesCs;
-
     static Function<Stream<Obj>, Integer> numberOfGroup = stream -> stream.collect(Collectors.groupingBy(Function.identity())).size();
     static Function<Integer, BiFunction<Double, Stream<Obj>, List<Obj>>> groupByStat = stat -> (max, stream) -> stream.collect(Collectors.groupingBy(o -> o.stats[stat])).get(max);
     static Function<Integer, Comparator<Obj>> comparatorByStats = stats -> (o1, o2) -> o1.stats[stats] > o2.stats[stats] ? 1 : Objects.equals(o1.stats[stats], o2.stats[stats]) ? 0 : -1;
     static BiFunction<Integer, Stream<Obj>, Double> maxStats = (stat, stream) -> stream.mapToDouble(x -> x.stats[stat]).max().getAsDouble();
     static Function<Integer, ToDoubleFunction<Obj>> averageByStat = stat -> o -> o.stats[stat];
-
+    static Model m;
 
     public static void main(String[] args) {
+        System.out.println("Initialisation ...");
         init();
-        showBaseChoice();
+        boolean quit = false;
+        Scanner scan = new Scanner(System.in);
+        m = new Model("MKData");
+        do {
+            System.out.println("Menu");
+            System.out.println("1 Ajouter contrainte");
+            System.out.println("2 Résoudre");
+            System.out.println("3 Voir les données");
+            System.out.println("4 Quitter");
+            int val = scan.nextInt();
+            switch (val) {
+                case 1:
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    seeData();
+                    break;
+                case 4:
+                    quit = true;
+                    scan.close();
+                    break;
+                case 31415:
+                    System.out.println("On sait s'amuser en Allemagne !");
+                    pi();
+                    break;
+                default:
+                    System.out.println("Option inconnu, KHAZAD AI-MENU !");
+                    break;
+            }
+        } while (!quit);
+    }
 
-        Model m = new Model("MKData");
-        persCs = m.intVar("perso", 0, Main.pers.size() - 1);
-        kartCs = m.intVar("kart", 0, Main.kart.size() - 1);
-        rouesCs = m.intVar("roues", 0, Main.roues.size() - 1);
-        ailesCs = m.intVar("ailes", 0, Main.ailes.size() - 1);
-
-//        addConstraint(m, Obj.Weight, ">=", (int) (3.5 * 4));
-        IntVar res = addConstraint(m, Obj.SpeedGround, ">=", (int) (5.75 * 4));
-//        addConstraint(m,Obj.SpeedAir,">=", (int) (5*4));
-//        addConstraint(m, Obj.SpeedNoGravity, ">=", (int) (4 * 4));
-//        addConstraint(m, Obj.MiniTurbo, ">=", (int) (3 * 4));
-//        addConstraint(m, Obj.Acceleration, ">=", (int) (3 * 4));
-//
-        m.setObjective(Model.MAXIMIZE, res);
-
-//        System.out.println(m.getSolver().findAllSolutions().size());
-        printSolutions(m, true);
+    static void seeData() {
+        System.out.println("Personnages ------------------------------");
+        for (int i = 0; i < pers.size(); i++) {
+            System.out.println(i + " " + findSame(pers.get(i)));
+        }
+        System.out.println("Kart ------------------------------");
+        for (int i = 0; i < kart.size(); i++) {
+            System.out.println(i + " " + findSame(kart.get(i)));
+        }
+        System.out.println("Roues ------------------------------");
+        for (int i = 0; i < roues.size(); i++) {
+            System.out.println(i + " " + findSame(roues.get(i)));
+        }
+        System.out.println("Ailes ------------------------------");
+        for (int i = 0; i < ailes.size(); i++) {
+            System.out.println(i + " " + findSame(ailes.get(i)));
+        }
     }
 
     static void printSolutions(Model m) {
         printSolutions(m, false);
     }
 
-    static List<Obj> findSame(ObjType type, Obj o) {
-        return objs.stream().filter(x -> x.type.equals(type)).filter(x -> x.equals(o)).collect(Collectors.toList());
+    static List<Obj> findSame(Obj o) {
+        return objs.stream().filter(x -> x.equals(o)).collect(Collectors.toList());
     }
 
     static void printSolutions(Model m, boolean all) {
@@ -88,19 +113,39 @@ public class Main {
         }
     }
 
-    private static void printCombi(int pers, int kart, int roue, int aile) {
+    static void printCombi(int pers, int kart, int roue, int aile) {
         Obj persRes = Main.pers.get(pers);
         Obj kartRes = Main.kart.get(kart);
         Obj rouesRes = Main.roues.get(roue);
         Obj ailesRes = Main.ailes.get(aile);
-        System.out.println("Pers : " + findSame(ObjType.Pers, persRes));
-        System.out.println("Kart : " + findSame(ObjType.Kart, kartRes));
-        System.out.println("Roues : " + findSame(ObjType.Roue, rouesRes));
-        System.out.println("Ailes : " + findSame(ObjType.Aile, ailesRes));
+        System.out.println("Pers : " + findSame(persRes));
+        System.out.println("Kart : " + findSame(kartRes));
+        System.out.println("Roues : " + findSame(rouesRes));
+        System.out.println("Ailes : " + findSame(ailesRes));
         for (int i = 0; i < 12; i++) {
             System.out.println(Obj.GetChar(i) + " : " + (persRes.stats[i] + kartRes.stats[i] + rouesRes.stats[i] + ailesRes.stats[i]));
         }
         System.out.println();
+    }
+
+    private static void pi() {
+
+        persCs = m.intVar("perso", 0, Main.pers.size() - 1);
+        kartCs = m.intVar("kart", 0, Main.kart.size() - 1);
+        rouesCs = m.intVar("roues", 0, Main.roues.size() - 1);
+        ailesCs = m.intVar("ailes", 0, Main.ailes.size() - 1);
+
+        addConstraint(m, Obj.Weight, ">=", (int) (3.5 * 4));
+        IntVar res = addConstraint(m, Obj.SpeedGround, ">=", 4 * 4);
+        addConstraint(m, Obj.SpeedNoGravity, ">=", (int) (4 * 4));
+        addConstraint(m, Obj.SpeedAir, ">=", (int) (5 * 4));
+        addConstraint(m, Obj.MiniTurbo, ">=", (int) (3 * 4));
+        addConstraint(m, Obj.Acceleration, ">=", (int) (3 * 4));
+
+
+        m.setObjective(Model.MAXIMIZE, res);
+
+        printSolutions(m, false);
     }
 
     private static void showBaseChoice() {

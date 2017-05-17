@@ -74,11 +74,15 @@ public class Obj {
 
         Obj obj = (Obj) o;
 
+        if (type != obj.type) return false;
+        // Probably incorrect - comparing Object[] arrays with Arrays.equals
         return Arrays.equals(stats, obj.stats);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(stats);
+        int result = type != null ? type.hashCode() : 0;
+        result = 31 * result + Arrays.hashCode(stats);
+        return result;
     }
 }
