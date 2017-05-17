@@ -1,8 +1,12 @@
 import org.chocosolver.solver.Model;
+import org.chocosolver.solver.Solution;
 import org.chocosolver.solver.Solver;
 import org.chocosolver.solver.variables.IntVar;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Scanner;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
@@ -13,6 +17,7 @@ import java.util.stream.Stream;
 public class Main {
 
     public static final String newLine = System.getProperty("line.separator");
+    public static final String defaultModelName = "MKData";
     static List<Obj> objs;
     static List<Obj> pers;
     static List<Obj> kart;
@@ -30,10 +35,6 @@ public class Main {
     static IntVar kartCs;
     static IntVar rouesCs;
     static IntVar ailesCs;
-    static Function<Stream<Obj>, Integer> numberOfGroup = stream -> stream.collect(Collectors.groupingBy(Function.identity())).size();
-    static Function<Integer, BiFunction<Double, Stream<Obj>, List<Obj>>> groupByStat = stat -> (max, stream) -> stream.collect(Collectors.groupingBy(o -> o.stats[stat])).get(max);
-    static Function<Integer, Comparator<Obj>> comparatorByStats = stats -> (o1, o2) -> o1.stats[stats] > o2.stats[stats] ? 1 : Objects.equals(o1.stats[stats], o2.stats[stats]) ? 0 : -1;
-    static BiFunction<Integer, Stream<Obj>, Double> maxStats = (stat, stream) -> stream.mapToDouble(x -> x.stats[stat]).max().getAsDouble();
     static Function<Integer, ToDoubleFunction<Obj>> averageByStat = stat -> o -> o.stats[stat];
     static Model m;
 
@@ -42,35 +43,77 @@ public class Main {
         init();
         boolean quit = false;
         Scanner scan = new Scanner(System.in);
-        m = new Model("MKData");
-        do {
-            System.out.println("Menu");
-            System.out.println("1 Ajouter contrainte");
-            System.out.println("2 Résoudre");
-            System.out.println("3 Voir les données");
-            System.out.println("4 Quitter");
-            int val = scan.nextInt();
-            switch (val) {
-                case 1:
-                    break;
-                case 2:
-                    break;
-                case 3:
-                    seeData();
-                    break;
-                case 4:
-                    quit = true;
-                    scan.close();
-                    break;
-                case 31415:
-                    System.out.println("On sait s'amuser en Allemagne !");
-                    pi();
-                    break;
-                default:
-                    System.out.println("Option inconnu, KHAZAD AI-MENU !");
-                    break;
-            }
-        } while (!quit);
+        m = new Model(defaultModelName);
+        persCs = m.intVar("perso", 0, Main.pers.size() - 1);
+        kartCs = m.intVar("kart", 0, Main.kart.size() - 1);
+        rouesCs = m.intVar("roues", 0, Main.roues.size() - 1);
+        ailesCs = m.intVar("ailes", 0, Main.ailes.size() - 1);
+        try {
+            do {
+                System.out.println("Menu");
+                System.out.println("1 Ajouter contrainte");
+                System.out.println("2 Résoudre");
+                System.out.println("3 Voir les données");
+                System.out.println("4 Réinitialiser le modèle");
+                System.out.println("5 Aide");
+                System.out.println("6 Quitter");
+                int val = scan.nextInt();
+                switch (val) {
+                    case 1:
+                        break;
+                    case 2:
+                        System.out.println("1 Afficher un seul solution");
+                        System.out.println("2 Afficher toutes les solutions");
+                        int val2 = scan.nextInt();
+                        try {
+                            switch (val2) {
+                                case 1:
+                                    printSolutions();
+                                    break;
+                                case 2:
+                                    printSolutions(true);
+                                    break;
+                                default:
+                                    System.out.println("Option inconnu, KHAZAD AI-MENU !");
+                                    break;
+                            }
+                        } catch (Exception e) {
+                            System.out.println("Erreur inconnu");
+                            //todo : delete
+                            e.printStackTrace();
+                        } finally {
+                            break;
+                        }
+                    case 3:
+                        seeData();
+                        break;
+                    case 4:
+                        m = new Model(defaultModelName);
+                        System.out.println("Ok");
+                        break;
+                    case 5:
+                        System.out.println("Outil console réalisé par Valentin \"Valball\" Jubert");
+                        System.out.println("L'outil permet de créer des \"sets\" pour Mario Kart 8 Deluxe");
+                        System.out.println("Vous pouvez ajoutez autant de contraintes que vous voulez cependant");
+                        System.out.println("prenez garde à ne pas rendre incohérent le modèle !");
+                        break;
+                    case 6:
+                        quit = true;
+                        scan.close();
+                        break;
+                    case 31415:
+                        System.out.println("On sait s'amuser en Allemagne !");
+                        pi();
+                        break;
+                    default:
+                        System.out.println("Option inconnu, KHAZAD AI-MENU !");
+                        break;
+                }
+            } while (!quit);
+        } catch (InputMismatchException e) {
+            System.out.println("La prochaine fois essaie de rentrer des chiffres !");
+            System.exit(107);
+        }
     }
 
     static void seeData() {
@@ -92,25 +135,24 @@ public class Main {
         }
     }
 
-    static void printSolutions(Model m) {
-        printSolutions(m, false);
+    static void printSolutions() {
+        printSolutions(false);
+    }
+
+    static void printSolutions(boolean all) {
+        Solver solver = m.getSolver();
+        if (all) {
+            solver.findAllSolutions().forEach(solution -> {
+                printCombi(solution.getIntVal(persCs), solution.getIntVal(kartCs), solution.getIntVal(rouesCs), solution.getIntVal(ailesCs));
+            });
+        } else {
+            Solution s = solver.findSolution();
+            printCombi(s.getIntVal(persCs), s.getIntVal(kartCs), s.getIntVal(rouesCs), s.getIntVal(ailesCs));
+        }
     }
 
     static List<Obj> findSame(Obj o) {
         return objs.stream().filter(x -> x.equals(o)).collect(Collectors.toList());
-    }
-
-    static void printSolutions(Model m, boolean all) {
-        Solver solver = m.getSolver();
-        if (all) {
-            solver.findAllSolutions().stream().forEach(solution -> {
-                printCombi(solution.getIntVal(persCs), solution.getIntVal(kartCs), solution.getIntVal(rouesCs), solution.getIntVal(ailesCs));
-            });
-        } else {
-            while (solver.solve()) {
-                printCombi(persCs.getValue(), kartCs.getValue(), rouesCs.getValue(), ailesCs.getValue());
-            }
-        }
     }
 
     static void printCombi(int pers, int kart, int roue, int aile) {
@@ -145,18 +187,7 @@ public class Main {
 
         m.setObjective(Model.MAXIMIZE, res);
 
-        printSolutions(m, false);
-    }
-
-    private static void showBaseChoice() {
-        Obj p = objs.parallelStream().filter(x -> x.nom.equals("Morton")).findFirst().get();
-        Obj k = objs.parallelStream().filter(x -> x.nom.equals("Or")).findFirst().get();
-        Obj r = objs.parallelStream().filter(x -> x.nom.equals("Roller")).findFirst().get();
-        Obj a = objs.parallelStream().filter(x -> x.nom.equals("Aile fleurie")).findFirst().get();
-
-        IntStream.range(0, 12).forEachOrdered(x -> System.out.println(Obj.GetChar(x) + " : " + (p.stats[x] + k.stats[x] + r.stats[x] + a.stats[x])));
-        System.out.println("Fin Base");
-        System.out.println();
+        printSolutions(false);
     }
 
     static IntVar addConstraint(Model m, int stat, String op, Integer result) {
@@ -176,19 +207,6 @@ public class Main {
         m.scalar(new IntVar[]{resPers, resKart, resRoues, resAiles}, new int[]{1, 1, 1, 1}, op, res).post();
         return res;
 
-    }
-
-    public static void findMax(int stat) {
-        double maxMiniPerso = maxStats.apply(stat, pers.parallelStream());
-        double maxMiniKart = maxStats.apply(stat, kart.parallelStream());
-        double maxMiniRoues = maxStats.apply(stat, roues.parallelStream());
-        double maxMiniAiles = maxStats.apply(stat, ailes.parallelStream());
-
-        groupByStat.apply(stat).apply(maxMiniPerso, pers.stream()).forEach(System.out::println);
-        groupByStat.apply(stat).apply(maxMiniKart, kart.stream()).forEach(System.out::println);
-        groupByStat.apply(stat).apply(maxMiniRoues, roues.stream()).forEach(System.out::println);
-        groupByStat.apply(stat).apply(maxMiniAiles, ailes.stream()).forEach(System.out::println);
-        System.out.println(maxMiniAiles + maxMiniKart + maxMiniPerso + maxMiniRoues);
     }
 
     public static void init() {
