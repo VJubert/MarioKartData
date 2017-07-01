@@ -1,6 +1,4 @@
 import org.chocosolver.solver.Model;
-import org.chocosolver.solver.Solution;
-import org.chocosolver.solver.Solver;
 import org.chocosolver.solver.variables.IntVar;
 
 import java.util.Arrays;
@@ -17,7 +15,6 @@ import java.util.stream.Stream;
 public class Main {
 
     public static final String newLine = System.getProperty("line.separator");
-    public static final String defaultModelName = "MKData";
     static List<Obj> objs;
     static List<Obj> pers;
     static List<Obj> kart;
@@ -31,10 +28,6 @@ public class Main {
     static Double[] kartAverage;
     static Double[] rouesAverage;
     static Double[] ailesAverage;
-    static IntVar persCs;
-    static IntVar kartCs;
-    static IntVar rouesCs;
-    static IntVar ailesCs;
     static Function<Integer, ToDoubleFunction<Obj>> averageByStat = stat -> o -> o.stats[stat];
     static Model m;
 
@@ -43,11 +36,7 @@ public class Main {
         init();
         boolean quit = false;
         Scanner scan = new Scanner(System.in);
-        m = new Model(defaultModelName);
-        persCs = m.intVar("perso", 0, Main.pers.size() - 1);
-        kartCs = m.intVar("kart", 0, Main.kart.size() - 1);
-        rouesCs = m.intVar("roues", 0, Main.roues.size() - 1);
-        ailesCs = m.intVar("ailes", 0, Main.ailes.size() - 1);
+//        m = new Model(defaultModelName);
         try {
             do {
                 System.out.println("Menu");
@@ -62,40 +51,42 @@ public class Main {
                     case 1:
                         break;
                     case 2:
-                        System.out.println("1 Afficher un seul solution");
-                        System.out.println("2 Afficher toutes les solutions");
-                        int val2 = scan.nextInt();
-                        try {
-                            switch (val2) {
-                                case 1:
-                                    printSolutions();
-                                    break;
-                                case 2:
-                                    printSolutions(true);
-                                    break;
-                                default:
-                                    System.out.println("Option inconnu, KHAZAD AI-MENU !");
-                                    break;
-                            }
-                        } catch (Exception e) {
-                            System.out.println("Erreur inconnu");
-                            //todo : delete
-                            e.printStackTrace();
-                        } finally {
-                            break;
-                        }
+//                        System.out.println("1 Afficher un seul solution");
+//                        System.out.println("2 Afficher toutes les solutions");
+//                        int val2 = scan.nextInt();
+//                        try {
+//                            switch (val2) {
+//                                case 1:
+////                                    solveAndPrint();
+//                                    break;
+//                                case 2:
+////                                    solveAndPrint(true);
+//                                    break;
+//                                default:
+//                                    System.out.println("Option inconnu, KHAZAD AI-MENU !");
+//                                    break;
+//                            }
+//                        } catch (ContradictionException e1) {
+//                            System.out.println("Modèle inconsistant !");
+//                        } catch (Exception e2) {
+//                            System.out.println("Erreur inconnu");
+//                            //todo : delete
+//                            e2.printStackTrace();
+//                        } finally {
+//                            break;
+//                        }
                     case 3:
                         seeData();
                         break;
                     case 4:
-                        m = new Model(defaultModelName);
-                        System.out.println("Ok");
+//                        m = new Model(defaultModelName);
+//                        System.out.println("Ok");
                         break;
                     case 5:
                         System.out.println("Outil console réalisé par Valentin \"Valball\" Jubert");
                         System.out.println("L'outil permet de créer des \"sets\" pour Mario Kart 8 Deluxe");
-                        System.out.println("Vous pouvez ajoutez autant de contraintes que vous voulez cependant");
-                        System.out.println("prenez garde à ne pas rendre incohérent le modèle !");
+                        System.out.println("Vous pouvez ajoutez autant de contraintes que vous voulez.");
+                        System.out.println("Cependant prenez garde à ne pas rendre incohérent le modèle !");
                         break;
                     case 6:
                         quit = true;
@@ -135,22 +126,6 @@ public class Main {
         }
     }
 
-    static void printSolutions() {
-        printSolutions(false);
-    }
-
-    static void printSolutions(boolean all) {
-        Solver solver = m.getSolver();
-        if (all) {
-            solver.findAllSolutions().forEach(solution -> {
-                printCombi(solution.getIntVal(persCs), solution.getIntVal(kartCs), solution.getIntVal(rouesCs), solution.getIntVal(ailesCs));
-            });
-        } else {
-            Solution s = solver.findSolution();
-            printCombi(s.getIntVal(persCs), s.getIntVal(kartCs), s.getIntVal(rouesCs), s.getIntVal(ailesCs));
-        }
-    }
-
     static List<Obj> findSame(Obj o) {
         return objs.stream().filter(x -> x.equals(o)).collect(Collectors.toList());
     }
@@ -170,43 +145,36 @@ public class Main {
         System.out.println();
     }
 
-    private static void pi() {
-
-        persCs = m.intVar("perso", 0, Main.pers.size() - 1);
-        kartCs = m.intVar("kart", 0, Main.kart.size() - 1);
-        rouesCs = m.intVar("roues", 0, Main.roues.size() - 1);
-        ailesCs = m.intVar("ailes", 0, Main.ailes.size() - 1);
-
-        addConstraint(m, Obj.Weight, ">=", (int) (3.5 * 4));
-        IntVar res = addConstraint(m, Obj.SpeedGround, ">=", 4 * 4);
-        addConstraint(m, Obj.SpeedNoGravity, ">=", (int) (4 * 4));
-        addConstraint(m, Obj.SpeedAir, ">=", (int) (5 * 4));
-        addConstraint(m, Obj.MiniTurbo, ">=", (int) (3 * 4));
-        addConstraint(m, Obj.Acceleration, ">=", (int) (3 * 4));
-
-
-        m.setObjective(Model.MAXIMIZE, res);
-
-        printSolutions(false);
+    private static void printCombi(Solution s) {
+        Obj persRes = Main.pers.get(s.pers);
+        Obj kartRes = Main.kart.get(s.kart);
+        Obj rouesRes = Main.roues.get(s.roue);
+        Obj ailesRes = Main.ailes.get(s.aile);
+        System.out.println("Pers : " + findSame(persRes));
+        System.out.println("Kart : " + findSame(kartRes));
+        System.out.println("Roues : " + findSame(rouesRes));
+        System.out.println("Ailes : " + findSame(ailesRes));
+        for (int i = 0; i < 12; i++) {
+            System.out.println(Obj.GetChar(i) + " : " + (persRes.stats[i] + kartRes.stats[i] + rouesRes.stats[i] + ailesRes.stats[i]));
+        }
+        System.out.println();
     }
 
-    static IntVar addConstraint(Model m, int stat, String op, Integer result) {
-        IntVar resPers = m.intVar(-24, 24);
-        IntVar resKart = m.intVar(-24, 24);
-        IntVar resRoues = m.intVar(-24, 24);
-        IntVar resAiles = m.intVar(-24, 24);
-        m.element(resPers, persArray[stat], persCs).post();
-        m.element(resKart, kartArray[stat], kartCs).post();
-        m.element(resRoues, rouesArray[stat], rouesCs).post();
-        m.element(resAiles, ailesArray[stat], ailesCs).post();
-        IntVar res;
-        if (result == null)
-            res = m.intVar(-24, 24);
-        else
-            res = m.intVar(result);
-        m.scalar(new IntVar[]{resPers, resKart, resRoues, resAiles}, new int[]{1, 1, 1, 1}, op, res).post();
-        return res;
-
+    private static void pi() {
+        MarioSolver marioSolver = new MarioSolver();
+        try {
+            IntVar max = marioSolver.addConstraint(Obj.SpeedGround, ">=", 4);
+            marioSolver.addConstraint(Obj.Weight, ">=", 4);
+            marioSolver.addConstraint(Obj.Acceleration, ">=", 2.75);
+            marioSolver.constraintElement(ObjType.Kart, 0, 7, 10, 13, 14, 2);
+            marioSolver.constraintElement(ObjType.Pers, 13, 15);
+            marioSolver.constraintElement(ObjType.Aile, 3);
+            marioSolver.setObjective(Model.MAXIMIZE, max);
+            Solution s = marioSolver.findOne();
+            printCombi(s);
+        } catch (IncoherentException e) {
+            System.out.println("Système incohérent !");
+        }
     }
 
     public static void init() {
