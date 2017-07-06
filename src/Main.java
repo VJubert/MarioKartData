@@ -29,14 +29,13 @@ public class Main {
     static Double[] rouesAverage;
     static Double[] ailesAverage;
     static Function<Integer, ToDoubleFunction<Obj>> averageByStat = stat -> o -> o.stats[stat];
-    static Model m;
 
     public static void main(String[] args) {
         System.out.println("Initialisation ...");
         init();
         boolean quit = false;
         Scanner scan = new Scanner(System.in);
-//        m = new Model(defaultModelName);
+        MarioSolver solver = new MarioSolver();
         try {
             do {
                 System.out.println("Menu");
@@ -49,38 +48,119 @@ public class Main {
                 int val = scan.nextInt();
                 switch (val) {
                     case 1:
+                        System.out.println("1 Contraindre \"set\"");
+                        System.out.println("2 Contraindre \"stats\"");
+                        System.out.println("3 Annuler");
+                        int val1 = scan.nextInt();
+                        switch (val1) {
+                            case 1:
+                                System.out.println("0 Personnage");
+                                System.out.println("1 Kart");
+                                System.out.println("2 Roues");
+                                System.out.println("3 Ailes");
+                                int type = scan.nextInt();
+                                ObjType objType;
+                                switch (type) {
+                                    case 0:
+                                        objType = ObjType.Pers;
+                                        break;
+                                    case 1:
+                                        objType = ObjType.Kart;
+                                        break;
+                                    case 2:
+                                        objType = ObjType.Roue;
+                                        break;
+                                    case 3:
+                                        objType = ObjType.Aile;
+                                        break;
+                                    default:
+                                        System.out.println("Option inconnu, KHAZAD AI-MENU !");
+                                        continue;
+                                }
+                                System.out.println("1 Contraindre à une valeur");
+                                System.out.println("2 Contraindre entre 2 valeurs");
+                                System.out.println("3 Contraindre parmi plusieurs valeurs");
+                                int v10 = scan.nextInt();
+                                try {
+                                    switch (v10) {
+                                        case 1:
+                                            System.out.println("Rentrez la valeur");
+                                            solver.constraintElement(objType, scan.nextInt());
+                                            break;
+                                        case 2:
+                                            System.out.println("Rentrez le minimum");
+                                            int min = scan.nextInt();
+                                            System.out.println("Rentrez le maximum");
+                                            int max = scan.nextInt();
+                                            solver.constraintElement(objType, min, max);
+                                            break;
+                                        case 3:
+                                            System.out.println("Rentrez les valeurs séparés d'un espace");
+                                            String[] tabValues = scan.next().split(" ");
+                                            int[] intValues = Arrays.stream(tabValues).parallel().mapToInt(Integer::parseInt).toArray();
+                                            solver.constraintElement(objType, intValues);
+                                            break;
+                                        default:
+                                            System.out.println("Option inconnu, KHAZAD AI-MENU !");
+                                            continue;
+                                    }
+                                } catch (IncoherentException e) {
+                                    System.out.println("Valeur(s) hors limite");
+                                } finally {
+                                    break;
+                                }
+                            case 2:
+                                try {
+                                    System.out.println(Obj.GetAllStat());
+                                    System.out.println("Rentrez la stat");
+                                    int stat = scan.nextInt();
+                                    System.out.println("Rentrez l'opérande");
+                                    String op = scan.next();
+                                    System.out.println("Rentrez l'objectif");
+                                    double obj = scan.nextDouble();
+                                    solver.addConstraint(stat, op, obj);
+                                } catch (IncoherentException e) {
+                                    System.out.println("Objectif hors limite");
+                                } finally {
+                                    break;
+                                }
+                            case 3:
+                                break;
+                            default:
+                                System.out.println("Option inconnu, KHAZAD AI-MENU !");
+                                break;
+                        }
                         break;
                     case 2:
-//                        System.out.println("1 Afficher un seul solution");
-//                        System.out.println("2 Afficher toutes les solutions");
-//                        int val2 = scan.nextInt();
-//                        try {
-//                            switch (val2) {
-//                                case 1:
-////                                    solveAndPrint();
-//                                    break;
-//                                case 2:
-////                                    solveAndPrint(true);
-//                                    break;
-//                                default:
-//                                    System.out.println("Option inconnu, KHAZAD AI-MENU !");
-//                                    break;
-//                            }
-//                        } catch (ContradictionException e1) {
-//                            System.out.println("Modèle inconsistant !");
-//                        } catch (Exception e2) {
-//                            System.out.println("Erreur inconnu");
-//                            //todo : delete
-//                            e2.printStackTrace();
-//                        } finally {
-//                            break;
-//                        }
+                        System.out.println("1 Afficher un seul solution");
+                        System.out.println("2 Afficher toutes les solutions");
+                        System.out.println("3 Annuler");
+                        int val11 = scan.nextInt();
+                        try {
+                            switch (val11) {
+                                case 1:
+                                    printCombi(solver.findOne());
+                                    break;
+                                case 2:
+                                    solver.findAll().forEach(Main::printCombi);
+                                    break;
+                                case 3:
+                                    break;
+                                default:
+                                    System.out.println("Option inconnu, KHAZAD AI-MENU !");
+                                    break;
+                            }
+                        } catch (IncoherentException e) {
+                            System.out.println("Système incohérent !");
+                        } finally {
+                            break;
+                        }
                     case 3:
                         seeData();
                         break;
                     case 4:
-//                        m = new Model(defaultModelName);
-//                        System.out.println("Ok");
+                        solver = new MarioSolver();
+                        System.out.println("Ok");
                         break;
                     case 5:
                         System.out.println("Outil console réalisé par Valentin \"Valball\" Jubert");
@@ -130,7 +210,7 @@ public class Main {
         return objs.stream().filter(x -> x.equals(o)).collect(Collectors.toList());
     }
 
-    static void printCombi(int pers, int kart, int roue, int aile) {
+    private static void printCombi(int pers, int kart, int roue, int aile) {
         Obj persRes = Main.pers.get(pers);
         Obj kartRes = Main.kart.get(kart);
         Obj rouesRes = Main.roues.get(roue);
@@ -170,8 +250,8 @@ public class Main {
             marioSolver.constraintElement(ObjType.Pers, 13, 15);
             marioSolver.constraintElement(ObjType.Aile, 3);
             marioSolver.setObjective(Model.MAXIMIZE, max);
-            Solution s = marioSolver.findOne();
-            printCombi(s);
+            List<Solution> solutionList = marioSolver.findAll();
+            solutionList.forEach(Main::printCombi);
         } catch (IncoherentException e) {
             System.out.println("Système incohérent !");
         }

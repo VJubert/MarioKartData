@@ -19,6 +19,7 @@ public class Obj {
     ObjType type;
     String nom;
     Double[] stats;
+
     Obj(ObjType type, String nom, double[] stats) {
         this.type = type;
         this.nom = nom;
@@ -29,6 +30,13 @@ public class Obj {
         for (int i = 0; i < stats.length; i++) {
             this.stats[i] = stats[i];
         }
+    }
+
+    static String GetAllStat() {
+        String newLine = System.getProperty("line.separator");
+        return "0 SpeedGround" + newLine + "1 SpeedWater" + newLine + "2 SpeedAir" + newLine + "3 SpeedNoGravity" + newLine
+                + "4 Acceleration" + newLine + "5 Weight" + newLine + "6 HandlingGround" + newLine + "7 HandlingWater" + newLine
+                + "8 HandlingAir" + newLine + "9 HandlingNoGravity" + newLine + "10 Traction" + newLine + "11 MiniTurbo";
     }
 
     static String GetChar(int g) {

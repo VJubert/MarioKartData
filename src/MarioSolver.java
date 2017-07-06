@@ -25,7 +25,6 @@ public class MarioSolver {
         constraintList = new ArrayList<>();
     }
 
-
     public IntVar addConstraint(int stat, String operator, int objective) throws IncoherentException {
         return addConstraint(stat, operator, Double.valueOf(objective));
     }
@@ -169,11 +168,13 @@ public class MarioSolver {
     }
 
     public List<Solution> findAll() throws IncoherentException {
+        initSolve();
         List<org.chocosolver.solver.Solution> solutionList = model.getSolver().findAllSolutions();
         if (solutionList.size() == 0)
             throw new IncoherentException();
-        else
-            return solutionList.parallelStream().map(x -> new Solution(x.getIntVal(persConstraint), x.getIntVal(kartConstraint), x.getIntVal(roueConstraint), x.getIntVal(aileConstraint))).collect(Collectors.toList());
+        else {
+            return solutionList.parallelStream().map(sol -> new Solution(sol.getIntVal(persConstraint), sol.getIntVal(kartConstraint), sol.getIntVal(roueConstraint), sol.getIntVal(aileConstraint))).collect(Collectors.toList());
+        }
     }
 
     private void initSolve() {
