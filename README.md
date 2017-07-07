@@ -1,4 +1,4 @@
-# MarioKartData [WIP]
+# MarioKartData
 
 Some fun stuffs with Mario Kart 8 Deluxe Data 
 
