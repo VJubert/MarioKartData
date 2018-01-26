@@ -1,5 +1,4 @@
 import java.util.Arrays;
-
 /**
  * Created by Valentin on 04/05/2017.
  */
@@ -16,9 +15,24 @@ public class Obj {
     public static final int HandlingNoGravity = 9;
     public static final int Traction = 10;
     public static final int MiniTurbo = 11;
+
+
     ObjType type;
     String nom;
     Double[] stats;
+
+//    Double SpeedGround;
+//    Double SpeedWater;
+//    Double SpeedAir;
+//    Double SpeedNoGravity;
+//    Double Acceleration;
+//    Double Weight;
+//    Double HandlingGround;
+//    Double HandlingWater;
+//    Double HandlingAir;
+//    Double HandlingNoGravity;
+//    Double Traction;
+//    Double MiniTurbo;
 
     Obj(ObjType type, String nom, double[] stats) {
         this.type = type;
@@ -26,6 +40,18 @@ public class Obj {
         if (stats.length != 12) {
             System.err.println(nom);
         }
+//        SpeedGround=stats[0];
+//        SpeedWater=stats[1];
+//        SpeedAir=stats[2];
+//        SpeedNoGravity=stats[3];
+//        Acceleration=stats[4];
+//        Weight=stats[5];
+//        HandlingGround=stats[6];
+//        HandlingWater=stats[7];
+//        HandlingAir=stats[8];
+//        HandlingNoGravity=stats[9];
+//        Traction=stats[10];
+//        MiniTurbo=stats[11];
         this.stats = new Double[stats.length];
         for (int i = 0; i < stats.length; i++) {
             this.stats[i] = stats[i];
@@ -85,6 +111,7 @@ public class Obj {
         if (type != obj.type) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         return Arrays.equals(stats, obj.stats);
+//        return true;
     }
 
     @Override
